@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import time
 
 # Tools for scaling data, PCA, and standard datasets
 from sklearn import preprocessing, decomposition, datasets
@@ -32,7 +33,28 @@ def read_data(file_path):
     
     return features, labels
 
-# Example usage
+def perceptron(X_train, y_train, epoch_num):
+    # set weights to zero
+    w = np.zeros(shape=(1, X_train.shape[1]+1))
+    misclassified_arr = []
+
+    for epoch in range(epoch_num):
+        misclassified = 0
+        for x, label in zip(X_train, y_train):
+            x = np.insert(x, 0, 1)
+            y = np.dot(w, x.transpose())
+
+            target = 1.0 if (y > 0) else -1.0
+            delta = label - target
+            #print("epoch", epoch)
+            #print(x, y, label, target, delta)
+            if delta: # misclassified
+                misclassified += 1
+                w += delta * x
+        misclassified_arr.append(misclassified)
+    return (w, misclassified_arr)
+
+
 file_path = 'dataset/data.csv'  # Update with the path to your file
 features, labels = read_data(file_path)
 
@@ -84,4 +106,17 @@ np.unique(y, return_counts=True)
 # Then we split the dataset in training set (60%) and test set (40%) using stratification.
 
 X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.4,random_state=42, stratify=y)
+
+epoch_num = 100
+
+w, misclassified_arr = perceptron(X_train, y_train, epoch_num)
+print(w)
+print(misclassified_arr)
+
+epochs = np.arange(1, epoch_num+1)
+plt.plot(epochs, misclassified_arr)
+plt.xlabel('iterations')
+plt.ylabel('misclassified')
+#plt.show()
+
 
