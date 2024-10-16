@@ -63,6 +63,68 @@ def pegasus(x, y):
     w = np.zeros(len(x[0]))
 
     #learning rate 
+    eta = 0.001
+    #array of indices for shuffling
+    order = np.arange(0,len(x),1)
+    # Convergence parameters
+    margin_current = 0
+    margin_previous = -10
+
+    pos_support_vectors = 0
+    neg_support_vectors = 0
+
+    not_converged = True
+    t = 0 
+    start_time = time.time()
+
+    epoch = 0
+
+    while(not_converged):
+        margin_previous = margin_current
+        t += 1
+        pos_support_vectors = 0
+        neg_support_vectors = 0
+        
+        random.shuffle(order)
+
+        # Loop through shuffled samples
+        for i in order:  
+            prediction = np.dot(x[i],w)
+            
+            #check for support vectors
+            if (round((prediction),1) == 1):
+                pos_support_vectors += 1
+                #pos support vec found
+            if (round((prediction),1) == -1):
+                neg_support_vectors += 1
+                #neg support vec found
+                
+            # Misclassification (hinge loss condition)
+            # Update weight without regularization
+            if (y[i]*prediction) < 1 :
+                w = w + eta * y[i] * x[i]
+        
+        if(t>1000):    
+            margin_current = np.linalg.norm(w)
+            print("pos SV", pos_support_vectors, "neg SV", neg_support_vectors, "delta margin", margin_current - margin_previous)
+            if((pos_support_vectors > 0)and(neg_support_vectors > 0)and((margin_current - margin_previous) < 0.01)):
+                not_converged = False
+        epoch += 1
+        if epoch % 10 == 0:
+            print('epoch', epoch, 'time', time.time() - start_time)
+
+    #print running time
+    print("--- %s seconds ---" % (time.time() - start_time))
+    return w
+
+def regularized_log_classification(x, y):
+    #add bias to sample vectors
+    x = np.c_[x,np.ones(len(x))]
+
+    #initialize weight vector
+    w = np.zeros(len(x[0]))
+
+    #learning rate 
     lam = 0.001
     #array of number for shuffling
     order = np.arange(0,len(x),1)
@@ -105,7 +167,7 @@ def pegasus(x, y):
             else:
                 w = fac
         
-        if(t>10000):    
+        if(t>1000):    
             margin_current = np.linalg.norm(w)
             print("pos SV", pos_support_vectors, "neg SV", neg_support_vectors, "delta margin", margin_current - margin_previous)
             if((pos_support_vectors > 0)and(neg_support_vectors > 0)and((margin_current - margin_previous) < 0.01)):
@@ -186,3 +248,6 @@ plt.ylabel('misclassified')
 
 w = pegasus(X_train, y_train)
 np.save("pegasus.npy", w)
+
+w = regularized_log_classification(X_train, y_train)
+np.save("regularized_log_classification.npy", w)

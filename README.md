@@ -39,5 +39,16 @@ Number of -1s == 5008
 It means that this dataset is balanced and there is no need for undersample or other methods reducing imbalance.
 There are no labels other than 1 or -1, so there are no label outliers / missing values.
 
+## SVM Pegasos without regularization
 
+Functionality:
+
+    The algorithm iteratively updates the weight vector w based on misclassifications.
+    There’s no regularization (penalizing large weights), so the focus is purely on minimizing hinge loss.
+    The loop continues until it meets a convergence criterion, checking for the stabilization of the margin and the presence of support vectors.
+
+Performance:
+
+    Without regularization, the model might overfit the data, especially if the dataset contains noise or outliers.
+    This algorithm is faster since no regularization factor is computed, but it may result in a model that performs worse on unseen data due to overfitting.
 
