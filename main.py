@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import time
+import random
 
 # Tools for scaling data, PCA, and standard datasets
 from sklearn import preprocessing, decomposition, datasets
@@ -53,6 +54,69 @@ def perceptron(X_train, y_train, epoch_num):
                 w += delta * x
         misclassified_arr.append(misclassified)
     return (w, misclassified_arr)
+
+def pegasus(x, y):
+    #add bias to sample vectors
+    x = np.c_[x,np.ones(len(x))]
+
+    #initialize weight vector
+    w = np.zeros(len(x[0]))
+
+    #learning rate 
+    lam = 0.001
+    #array of number for shuffling
+    order = np.arange(0,len(x),1)
+    margin_current = 0
+    margin_previous = -10
+
+    pos_support_vectors = 0
+    neg_support_vectors = 0
+
+    not_converged = True
+    t = 0 
+    start_time = time.time()
+
+    epoch = 0
+
+    while(not_converged):
+        margin_previous = margin_current
+        t += 1
+        pos_support_vectors = 0
+        neg_support_vectors = 0
+        
+        eta = 1/(lam*t)
+        fac = (1-(eta*lam))*w
+        random.shuffle(order)
+        for i in order:  
+            prediction = np.dot(x[i],w)
+            
+            #check for support vectors
+            if (round((prediction),1) == 1):
+                pos_support_vectors += 1
+                #pos support vec found
+            if (round((prediction),1) == -1):
+                neg_support_vectors += 1
+                #neg support vec found
+                
+            #misclassification
+            if (y[i]*prediction) < 1 :
+                w = fac + eta*y[i]*x[i]            
+            #correct classification
+            else:
+                w = fac
+        
+        if(t>10000):    
+            margin_current = np.linalg.norm(w)
+            print("pos SV", pos_support_vectors, "neg SV", neg_support_vectors, "delta margin", margin_current - margin_previous)
+            if((pos_support_vectors > 0)and(neg_support_vectors > 0)and((margin_current - margin_previous) < 0.01)):
+                not_converged = False
+        epoch += 1
+        if epoch % 10 == 0:
+            print('epoch', epoch, 'time', time.time() - start_time)
+
+    #print running time
+    print("--- %s seconds ---" % (time.time() - start_time))
+    return w
 
 
 file_path = 'dataset/data.csv'  # Update with the path to your file
@@ -107,11 +171,12 @@ np.unique(y, return_counts=True)
 
 X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.4,random_state=42, stratify=y)
 
-epoch_num = 100
+epoch_num = 10
 
 w, misclassified_arr = perceptron(X_train, y_train, epoch_num)
-print(w)
-print(misclassified_arr)
+np.save("perceptron.npy", w)
+# print(w)
+# print(misclassified_arr)
 
 epochs = np.arange(1, epoch_num+1)
 plt.plot(epochs, misclassified_arr)
@@ -119,4 +184,5 @@ plt.xlabel('iterations')
 plt.ylabel('misclassified')
 #plt.show()
 
-
+w = pegasus(X_train, y_train)
+np.save("pegasus.npy", w)
