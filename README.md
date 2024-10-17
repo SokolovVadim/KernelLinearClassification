@@ -6,7 +6,7 @@ Besides complying with the project’s specifications, it is extremely important
 
 ## Project 1: Kernelized Linear Classification
 
-Download this dataset. The goal is to learn how to classify the  labels based on the numerical features  according to the 1-0 loss, which is the metric you should adopt when evaluating the trained models. Explore the dataset and perform the appropriate preprocessing steps. Please be mindful of data leakage between the training and test sets.
+Download this dataset. The goal is to learn how to classify the  labels based on the numerical features  according to the 0-1 loss, which is the metric you should adopt when evaluating the trained models. Explore the dataset and perform the appropriate preprocessing steps. Please be mindful of data leakage between the training and test sets.
 
 Implement from scratch (without using libraries such as Scikit-learn) the following machine learning algorithms:
 
@@ -52,3 +52,23 @@ Performance:
     Without regularization, the model might overfit the data, especially if the dataset contains noise or outliers.
     This algorithm is faster since no regularization factor is computed, but it may result in a model that performs worse on unseen data due to overfitting.
 
+
+## Performance
+
+### Perceptron 1000 epochs
+
+Test Accuracy for Perceptron: 69.47%
+
+### Pegasos hinge loss 1000 epochs
+
+epoch 1000 time 78.50806331634521
+pos SV 20 neg SV 25 delta margin 5.933144820283454
+pos SV 16 neg SV 18 delta margin -0.0018304066875485248
+--- 78.66581273078918 seconds ---
+Test Accuracy for Pegasos: 71.10%
+
+### Pegasos log loss regularized 1000 epochs
+
+Epoch 800, Logistic Loss: 7243.350702299096
+Epoch 900, Logistic Loss: 8456.289560211537
+Test Accuracy: 68.88%

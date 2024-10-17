@@ -34,28 +34,45 @@ def read_data(file_path):
     
     return features, labels
 
-def perceptron(X_train, y_train, epoch_num):
-    # set weights to zero
-    w = np.zeros(shape=(1, X_train.shape[1]+1))
-    misclassified_arr = []
+def plot_loss(losses):
+    plt.plot(losses)
+    plt.title("Loss over Epochs")
+    plt.xlabel("Epochs")
+    plt.ylabel("Loss")
+    plt.show()
 
-    for epoch in range(epoch_num):
-        misclassified = 0
-        for x, label in zip(X_train, y_train):
-            x = np.insert(x, 0, 1)
-            y = np.dot(w, x.transpose())
+# Predict function for Pegasos
+def predict(X, w):
+    # Add bias term
+    X = np.c_[X, np.ones(len(X))]
+    return np.sign(np.dot(X, w))
 
-            target = 1.0 if (y > 0) else -1.0
-            delta = label - target
-            #print("epoch", epoch)
-            #print(x, y, label, target, delta)
-            if delta: # misclassified
-                misclassified += 1
-                w += delta * x
-        misclassified_arr.append(misclassified)
-    return (w, misclassified_arr)
+def perceptron(X, y, epochs=1000, eta=0.01):
+    # Add bias term to sample vectors (X -> [X | 1] for bias)
+    X = np.c_[X, np.ones(len(X))]
 
-def pegasus(x, y):
+    # Initialize weight vector to zero
+    w = np.zeros(len(X[0]))  # w has size equal to number of features (+1 for bias)
+    # Array of indices for shuffling
+    order = np.arange(0, len(X), 1)
+
+    for epoch in range(epochs):
+        # Shuffle data for each epoch to avoid cycles
+        random.shuffle(order)
+
+        # Loop through shuffled samples
+        for i in order:
+            prediction = np.dot(X[i], w)  # Linear prediction
+            
+            # If y[i] * prediction <= 0, it means misclassification
+            if y[i] * prediction <= 0:
+                w = w + eta * y[i] * X[i]  # Update the weights if misclassified
+        if epoch % 100 == 0:
+            print('epoch', epoch)
+    return w
+
+
+def pegasos(x, y):
     #add bias to sample vectors
     x = np.c_[x,np.ones(len(x))]
 
@@ -78,6 +95,8 @@ def pegasus(x, y):
     start_time = time.time()
 
     epoch = 0
+    # List to track hinge loss per epoch
+    hinge_losses = []
 
     while(not_converged):
         margin_previous = margin_current
@@ -103,6 +122,9 @@ def pegasus(x, y):
             # Update weight without regularization
             if (y[i]*prediction) < 1 :
                 w = w + eta * y[i] * x[i]
+        # Calculate hinge loss after each epoch
+        hinge_loss = np.sum([max(0, 1 - y[i] * np.dot(x[i], w)) for i in range(len(x))])
+        hinge_losses.append(hinge_loss)
         
         if(t>1000):    
             margin_current = np.linalg.norm(w)
@@ -110,75 +132,49 @@ def pegasus(x, y):
             if((pos_support_vectors > 0)and(neg_support_vectors > 0)and((margin_current - margin_previous) < 0.01)):
                 not_converged = False
         epoch += 1
-        if epoch % 10 == 0:
+        if epoch % 100 == 0:
             print('epoch', epoch, 'time', time.time() - start_time)
 
     #print running time
     print("--- %s seconds ---" % (time.time() - start_time))
-    return w
+    return w, hinge_losses
 
-def regularized_log_classification(x, y):
-    #add bias to sample vectors
-    x = np.c_[x,np.ones(len(x))]
+def pegasos_logistic_loss(x, y, lam=0.001, epochs=1000, eta=0.001):
+    # Add bias term to sample vectors
+    x = np.c_[x, np.ones(len(x))]
 
-    #initialize weight vector
+    # Initialize weight vector to zero
     w = np.zeros(len(x[0]))
 
-    #learning rate 
-    lam = 0.001
-    #array of number for shuffling
-    order = np.arange(0,len(x),1)
-    margin_current = 0
-    margin_previous = -10
+    # Array of indices for shuffling
+    order = np.arange(0, len(x), 1)
+    
+    logistic_losses = []  # List to track logistic loss per epoch
 
-    pos_support_vectors = 0
-    neg_support_vectors = 0
-
-    not_converged = True
-    t = 0 
-    start_time = time.time()
-
-    epoch = 0
-
-    while(not_converged):
-        margin_previous = margin_current
-        t += 1
-        pos_support_vectors = 0
-        neg_support_vectors = 0
-        
-        eta = 1/(lam*t)
-        fac = (1-(eta*lam))*w
+    for epoch in range(epochs):
+        # Shuffle data order
         random.shuffle(order)
-        for i in order:  
-            prediction = np.dot(x[i],w)
-            
-            #check for support vectors
-            if (round((prediction),1) == 1):
-                pos_support_vectors += 1
-                #pos support vec found
-            if (round((prediction),1) == -1):
-                neg_support_vectors += 1
-                #neg support vec found
-                
-            #misclassification
-            if (y[i]*prediction) < 1 :
-                w = fac + eta*y[i]*x[i]            
-            #correct classification
-            else:
-                w = fac
-        
-        if(t>1000):    
-            margin_current = np.linalg.norm(w)
-            print("pos SV", pos_support_vectors, "neg SV", neg_support_vectors, "delta margin", margin_current - margin_previous)
-            if((pos_support_vectors > 0)and(neg_support_vectors > 0)and((margin_current - margin_previous) < 0.01)):
-                not_converged = False
-        epoch += 1
-        if epoch % 10 == 0:
-            print('epoch', epoch, 'time', time.time() - start_time)
 
-    #print running time
-    print("--- %s seconds ---" % (time.time() - start_time))
-    return w
+        # Loop through shuffled samples
+        for i in order:
+            prediction = np.dot(x[i], w)  # Linear prediction
+            
+            # Logistic loss gradient
+            z = y[i] * prediction
+            gradient = -y[i] * x[i] * (1 / (1 + np.exp(z)))
+
+            # Update weight vector with logistic loss gradient and regularization
+            w = (1 - eta * lam) * w - eta * gradient
+
+        # Calculate the logistic loss after each epoch
+        logistic_loss = np.sum([np.log(1 + np.exp(-y[i] * np.dot(x[i], w))) for i in range(len(x))])
+        logistic_losses.append(logistic_loss)
+
+        if epoch % 100 == 0:
+            print(f'Epoch {epoch}, Logistic Loss: {logistic_loss}')
+
+    # Return the final weight vector and logistic loss history
+    return w, logistic_losses
 
 
 file_path = 'dataset/data.csv'  # Update with the path to your file
@@ -209,19 +205,19 @@ df.head()
 
 # Print the result to verify
 #print("Features:", features[0:10])
-print("Labels:", labels[0:10])
-ones = []
-neg_ones = []
-for l in labels:
-    if l == 1:
-        ones.append(l)
-    elif l == -1:
-        neg_ones.append(l)
-    else:
-        print('neither 1 nor -1')
+# print("Labels:", labels[0:10])
+# ones = []
+# neg_ones = []
+# for l in labels:
+#     if l == 1:
+#         ones.append(l)
+#     elif l == -1:
+#         neg_ones.append(l)
+#     else:
+#         print('neither 1 nor -1')
 
-print("Number of +1 labels:", len(ones))
-print("Number of -1 labels:", len(neg_ones))
+# print("Number of +1 labels:", len(ones))
+# print("Number of -1 labels:", len(neg_ones))
 
 
 X = df.drop(columns='y').values
@@ -233,21 +229,41 @@ np.unique(y, return_counts=True)
 
 X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.4,random_state=42, stratify=y)
 
-epoch_num = 10
+epoch_num = 1000
 
-w, misclassified_arr = perceptron(X_train, y_train, epoch_num)
+w = perceptron(X_train, y_train, epochs=1000, eta=0.01)
 np.save("perceptron.npy", w)
-# print(w)
-# print(misclassified_arr)
+# Make predictions on the test set
+y_pred = predict(X_test, w)
 
-epochs = np.arange(1, epoch_num+1)
-plt.plot(epochs, misclassified_arr)
-plt.xlabel('iterations')
-plt.ylabel('misclassified')
+# Calculate accuracy
+accuracy = np.mean(y_pred == y_test)
+print(f"Test Accuracy for Perceptron: {accuracy * 100:.2f}%")
+
+# epochs = np.arange(1, epoch_num+1)
+# plt.plot(epochs, misclassified_arr)
+# plt.xlabel('iterations')
+# plt.ylabel('misclassified')
 #plt.show()
 
-w = pegasus(X_train, y_train)
-np.save("pegasus.npy", w)
+w, hinge_losses = pegasos(X_train, y_train)
+plot_loss(hinge_losses)
+np.save("pegasos.npy", w)
 
-w = regularized_log_classification(X_train, y_train)
+# Make predictions on the test set
+y_pred = predict(X_test, w)
+
+# Calculate accuracy
+accuracy = np.mean(y_pred == y_test)
+print(f"Test Accuracy for Pegasos: {accuracy * 100:.2f}%")
+
+w, log_loss = pegasos_logistic_loss(X_train, y_train, lam=0.001, epochs=1000, eta=0.001)
+plot_loss(log_loss)
 np.save("regularized_log_classification.npy", w)
+
+# Make predictions on the test set
+y_pred = predict(X_test, w)
+
+# Calculate accuracy
+accuracy = np.mean(y_pred == y_test)
+print(f"Test Accuracy: {accuracy * 100:.2f}%")
