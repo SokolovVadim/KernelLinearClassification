@@ -72,71 +72,47 @@ def perceptron(X, y, epochs=1000, eta=0.01):
     return w
 
 
-def pegasos(x, y):
-    #add bias to sample vectors
-    x = np.c_[x,np.ones(len(x))]
+def pegasos(x, y, epochs=1000):
+    n_samples, n_features = x.shape
+    
+    # Add bias term to sample vectors
+    x = np.c_[x, np.ones(len(x))]  # Adding bias
 
-    #initialize weight vector
-    w = np.zeros(len(x[0]))
+    # Initialize weight vector
+    w = np.zeros(n_features + 1)  # Including bias
+    
+    # Array of indices for shuffling
+    order = np.arange(0, n_samples)
 
-    #learning rate 
-    eta = 0.001
-    #array of indices for shuffling
-    order = np.arange(0,len(x),1)
-    # Convergence parameters
-    margin_current = 0
-    margin_previous = -10
-
-    pos_support_vectors = 0
-    neg_support_vectors = 0
-
-    not_converged = True
-    t = 0 
-    start_time = time.time()
-
-    epoch = 0
     # List to track hinge loss per epoch
     hinge_losses = []
-
-    while(not_converged):
-        margin_previous = margin_current
-        t += 1
-        pos_support_vectors = 0
-        neg_support_vectors = 0
-        
+    
+    # Start training
+    start_time = time.time()
+    
+    for epoch in range(1, epochs + 1):
+        # Shuffle data
         random.shuffle(order)
-
+        
         # Loop through shuffled samples
-        for i in order:  
-            prediction = np.dot(x[i],w)
+        for i in order:
+            prediction = np.dot(x[i], w)
             
-            #check for support vectors
-            if (round((prediction),1) == 1):
-                pos_support_vectors += 1
-                #pos support vec found
-            if (round((prediction),1) == -1):
-                neg_support_vectors += 1
-                #neg support vec found
+            # Misclassification condition (hinge loss condition)
+            if y[i] * prediction < 1:
+                # Update weight vector
+                w += y[i] * x[i]  # No learning rate or regularization
                 
-            # Misclassification (hinge loss condition)
-            # Update weight without regularization
-            if (y[i]*prediction) < 1 :
-                w = w + eta * y[i] * x[i]
-        # Calculate hinge loss after each epoch
-        hinge_loss = np.sum([max(0, 1 - y[i] * np.dot(x[i], w)) for i in range(len(x))])
+        # Calculate hinge loss for this epoch
+        hinge_loss = np.sum([max(0, 1 - y[i] * np.dot(x[i], w)) for i in range(n_samples)])
         hinge_losses.append(hinge_loss)
         
-        if(t>1000):    
-            margin_current = np.linalg.norm(w)
-            print("pos SV", pos_support_vectors, "neg SV", neg_support_vectors, "delta margin", margin_current - margin_previous)
-            if((pos_support_vectors > 0)and(neg_support_vectors > 0)and((margin_current - margin_previous) < 0.01)):
-                not_converged = False
-        epoch += 1
         if epoch % 100 == 0:
-            print('epoch', epoch, 'time', time.time() - start_time)
-
-    #print running time
-    print("--- %s seconds ---" % (time.time() - start_time))
+            print(f'Epoch {epoch}, Hinge Loss: {hinge_loss}')
+    
+    # Print final running time
+    print(f"--- {time.time() - start_time:.2f} seconds ---")
+    
     return w, hinge_losses
 
 def pegasos_logistic_loss(x, y, lam=0.001, epochs=1000, eta=0.001):
@@ -170,11 +146,58 @@ def pegasos_logistic_loss(x, y, lam=0.001, epochs=1000, eta=0.001):
         logistic_loss = np.sum([np.log(1 + np.exp(-y[i] * np.dot(x[i], w))) for i in range(len(x))])
         logistic_losses.append(logistic_loss)
 
-        if epoch % 100 == 0:
+        if epoch % 10 == 0:
             print(f'Epoch {epoch}, Logistic Loss: {logistic_loss}')
 
     # Return the final weight vector and logistic loss history
     return w, logistic_losses
+
+
+def polynomial_features(X, degree=2):
+    # Get number of samples (n) and features (d)
+    n_samples, n_features = X.shape
+    
+    # Initialize list to store expanded features
+    expanded_features = []
+    
+    # Loop through each sample in the dataset
+    for x in X:
+        # Start with the bias term (constant 1)
+        features = [1]
+        
+        # Add original features (degree 1)
+        features.extend(x)
+        
+        # Add squared terms and cross-products for degree 2
+        for i in range(n_features):
+            for j in range(i, n_features):
+                features.append(x[i] * x[j])
+        
+        # Append the expanded feature set for this sample
+        expanded_features.append(features)
+    
+    return np.array(expanded_features)
+
+
+def compare_weights(w, n_features):
+    # Assuming we have trained the weights
+    # Separate out the bias term from the weights
+    weights = w[:-1]  # Excluding the bias term
+    bias = w[-1]  # The bias term is the last element
+    feature_names = []
+    # Plot the weights
+    for i in range(n_features):
+        feature_names.append('x' + str(i + 1))
+    plt.barh(feature_names, weights)
+    plt.xlabel('Weight Value')
+    plt.ylabel('Feature')
+    plt.title('Perceptron Weights for Each Feature')
+    plt.show()
+
+    # Print the weights for comparison
+    for i, weight in enumerate(weights):
+        print(f"Feature {i+1}: Weight = {weight}")
+    print(f"Bias term: {bias}")
 
 
 file_path = 'dataset/data.csv'  # Update with the path to your file
@@ -186,8 +209,8 @@ df = pd.read_csv(file_path)
 df.dropna(inplace=True)  # Remove rows with missing values
 #print(df.size)
 
-df.info()
-df.head()
+# df.info()
+# df.head()
 
 # sns.pairplot(df, hue='y')  # 'y' is the label column
 # plt.show()
@@ -229,16 +252,16 @@ np.unique(y, return_counts=True)
 
 X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.4,random_state=42, stratify=y)
 
-epoch_num = 1000
+epochs = 1000
 
-w = perceptron(X_train, y_train, epochs=1000, eta=0.01)
-np.save("perceptron.npy", w)
-# Make predictions on the test set
-y_pred = predict(X_test, w)
+# w = perceptron(X_train, y_train, epochs=1000, eta=0.01)
+# np.save("perceptron.npy", w)
+# # Make predictions on the test set
+# y_pred = predict(X_test, w)
 
-# Calculate accuracy
-accuracy = np.mean(y_pred == y_test)
-print(f"Test Accuracy for Perceptron: {accuracy * 100:.2f}%")
+# # Calculate accuracy
+# accuracy = np.mean(y_pred == y_test)
+# print(f"Test Accuracy for Perceptron: {accuracy * 100:.2f}%")
 
 # epochs = np.arange(1, epoch_num+1)
 # plt.plot(epochs, misclassified_arr)
@@ -246,24 +269,83 @@ print(f"Test Accuracy for Perceptron: {accuracy * 100:.2f}%")
 # plt.ylabel('misclassified')
 #plt.show()
 
-w, hinge_losses = pegasos(X_train, y_train)
-plot_loss(hinge_losses)
-np.save("pegasos.npy", w)
+#w, hinge_losses = pegasos(X_train, y_train, epochs)
+# plot_loss(hinge_losses)
+# # np.save("pegasos.npy", w)
 
 # Make predictions on the test set
-y_pred = predict(X_test, w)
+# y_pred = predict(X_test, w)
+
+# # Calculate accuracy
+# accuracy = np.mean(y_pred == y_test)
+# print(f"Test Accuracy for Pegasos: {accuracy * 100:.2f}%")
+
+# w, log_loss = pegasos_logistic_loss(X_train, y_train, lam=0.001, epochs=2000, eta=0.0001)
+# plot_loss(log_loss)
+# np.save("regularized_log_classification.npy", w)
+
+# # Make predictions on the test set
+# y_pred = predict(X_test, w)
+
+# # # Calculate accuracy
+# accuracy = np.mean(y_pred == y_test)
+# print(f"Test Accuracy: {accuracy * 100:.2f}%")
+
+
+# --------------------------------------------------------------------
+# polynomial feature expansion of degree 2
+
+# Transform the original features into polynomial features
+X_poly_train = polynomial_features(X_train, 2)
+X_poly_test = polynomial_features(X_test, 2)
+
+n_samples, n_features = X_poly_train.shape
+print(X_train.shape, y_train.shape)
+print(X_poly_train.shape)
+print(X_poly_test.shape)
+
+# ---------------------
+# Train the Perceptron on the expanded features
+# w_perceptron_poly = perceptron(X_poly_train, y_train, epochs=1000, eta=0.01)
+
+# # Predict on the expanded test set
+# y_pred_poly = predict(X_poly_test, w_perceptron_poly)
+
+# # Calculate accuracy
+# accuracy_perceptron_poly = np.mean(y_pred_poly == y_test)
+# print(f"Perceptron with Polynomial Features (Degree 2) Test Accuracy: {accuracy_perceptron_poly * 100:.2f}%")
+
+# ---------------------
+
+# Train the Pegasos on the expanded features
+
+# print('Train the Pegasos on the expanded features')
+# w_pegasos_poly, hinge_losses_poly = pegasos(X_poly_train, y_train, epochs=700)
+# print(w_pegasos_poly.shape)
+
+# # Predict on the expanded test set
+# y_pred_poly = predict(X_poly_test, w_pegasos_poly)
+
+# # Calculate accuracy
+# accuracy_pegasos_poly = np.mean(y_pred_poly == y_test)
+# print(f"Pegasos with Polynomial Features (Degree 2) Test Accuracy: {accuracy_pegasos_poly * 100:.2f}%")
+
+# ---------------------
+
+# Train the Pegasos with log loss on the expanded features
+print('Train the Pegasos with log loss on the expanded features')
+w_pegasos_log_loss_poly, logistic_losses = pegasos_logistic_loss(X_poly_train, y_train,lam=0.1, epochs=100, eta=0.000001)
+
+# Predict on the expanded test set
+y_pred_poly = predict(X_poly_test, w_pegasos_log_loss_poly)
 
 # Calculate accuracy
-accuracy = np.mean(y_pred == y_test)
-print(f"Test Accuracy for Pegasos: {accuracy * 100:.2f}%")
+accuracy_pegasos_log_loss_poly = np.mean(y_pred_poly == y_test)
+print(f"Pegasos with Polynomial Features (Degree 2) Test Accuracy: {accuracy_pegasos_log_loss_poly * 100:.2f}%")
 
-w, log_loss = pegasos_logistic_loss(X_train, y_train, lam=0.001, epochs=1000, eta=0.001)
-plot_loss(log_loss)
-np.save("regularized_log_classification.npy", w)
 
-# Make predictions on the test set
-y_pred = predict(X_test, w)
-
-# Calculate accuracy
-accuracy = np.mean(y_pred == y_test)
-print(f"Test Accuracy: {accuracy * 100:.2f}%")
+# --------------------------------------------------------------------
+# Compare polynomial features
+# compare_weights(w_perceptron_poly, n_features)
+# compare_weights(w_pegasos_poly, n_features)
+compare_weights(w_pegasos_log_loss_poly, n_features)
