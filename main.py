@@ -12,28 +12,6 @@ from sklearn import preprocessing, decomposition, datasets
 # Tools for tracking learning curves and perform cross validation
 from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score, validation_curve, learning_curve
 
-# Function to read the file and process the data
-def read_data(file_path):
-    features = []
-    labels = []
-
-    # Open the file
-    with open(file_path, mode='r') as file:
-        reader = csv.reader(file)
-        # Skip the first line (description/header)
-        next(reader)
-        # Read each row
-        for row in reader:
-            # Convert the first 10 values (features) to float, and the last value (label) to int
-            x_values = list(map(float, row[:-1]))
-            y_value = int(row[-1])
-            
-            # Append the features and label to respective lists
-            features.append(x_values)
-            labels.append(y_value)
-    
-    return features, labels
-
 def plot_loss(losses):
     plt.plot(losses)
     plt.title("Loss over Epochs")
@@ -323,48 +301,29 @@ class KernelizedPegasos:
         """Predict labels for a batch of samples."""
         return np.array([self.predict_single(x) for x in X])
 
-file_path = 'dataset/data.csv'  # Update with the path to your file
-features, labels = read_data(file_path)
+# --------------------------------------------------------------------
 
+file_path = 'dataset/data.csv'  # Update with the path to your file)
 
 df = pd.read_csv(file_path)
-#print(df.size)
 df.dropna(inplace=True)  # Remove rows with missing values
-#print(df.size)
 
-# df.info()
-# df.head()
+df.info()
+df.head()
 
-# sns.pairplot(df, hue='y')  # 'y' is the label column
-# plt.show()
+sns.pairplot(df, hue='y')  # 'y' is the label column
+plt.show()
 
-# df.iloc[:, :-1].hist(bins=30, figsize=(10, 10), layout=(3, 4))  # Skips the last column (label)
-# plt.tight_layout()
-# plt.show()
+df.iloc[:, :-1].hist(bins=30, figsize=(10, 10), layout=(3, 4))  # Skips the last column (label)
+plt.tight_layout()
+plt.show()
 
 # Box plot for each feature (excluding the label)
-# plt.figure(figsize=(12, 6))
-# sns.boxplot(data=df.iloc[:, :-1])
-# plt.xticks(rotation=90)
-# plt.title('Box Plots of Features')
-# plt.show()
-
-# Print the result to verify
-#print("Features:", features[0:10])
-# print("Labels:", labels[0:10])
-# ones = []
-# neg_ones = []
-# for l in labels:
-#     if l == 1:
-#         ones.append(l)
-#     elif l == -1:
-#         neg_ones.append(l)
-#     else:
-#         print('neither 1 nor -1')
-
-# print("Number of +1 labels:", len(ones))
-# print("Number of -1 labels:", len(neg_ones))
-
+plt.figure(figsize=(12, 6))
+sns.boxplot(data=df.iloc[:, :-1])
+plt.xticks(rotation=90)
+plt.title('Box Plots of Features')
+plt.show()
 
 X = df.drop(columns='y').values
 y = df['y'].values
@@ -375,141 +334,150 @@ np.unique(y, return_counts=True)
 
 X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.4,random_state=42, stratify=y)
 
+# --------------------------------------------------------------------
+
 epochs = 1000
 
-# w = perceptron(X_train, y_train, epochs=1000, eta=0.01)
+print('Train perceptron')
+w = perceptron(X_train, y_train, epochs=1000, eta=0.001)
 # np.save("perceptron.npy", w)
-# # Make predictions on the test set
-# y_pred = predict(X_test, w)
+# Make predictions on the test set
+y_pred = predict(X_test, w)
 
-# # Calculate accuracy
-# accuracy = np.mean(y_pred == y_test)
-# print(f"Test Accuracy for Perceptron: {accuracy * 100:.2f}%")
+# Calculate accuracy
+accuracy = np.mean(y_pred == y_test)
+print(f"Test Accuracy for Perceptron: {accuracy * 100:.2f}%")
 
-# epochs = np.arange(1, epoch_num+1)
-# plt.plot(epochs, misclassified_arr)
-# plt.xlabel('iterations')
-# plt.ylabel('misclassified')
-#plt.show()
+# ---------------------
 
-#w, hinge_losses = pegasos(X_train, y_train, epochs)
-# plot_loss(hinge_losses)
-# # np.save("pegasos.npy", w)
+epochs = np.arange(1, epoch_num+1)
+plt.plot(epochs, misclassified_arr)
+plt.xlabel('iterations')
+plt.ylabel('misclassified')
+plt.show()
+
+print('Train pegasos')
+w, hinge_losses = pegasos(X_train, y_train, epochs)
+plot_loss(hinge_losses)
+# np.save("pegasos.npy", w)
 
 # Make predictions on the test set
-# y_pred = predict(X_test, w)
+y_pred = predict(X_test, w)
 
-# # Calculate accuracy
-# accuracy = np.mean(y_pred == y_test)
-# print(f"Test Accuracy for Pegasos: {accuracy * 100:.2f}%")
+# Calculate accuracy
+accuracy = np.mean(y_pred == y_test)
+print(f"Test Accuracy for Pegasos: {accuracy * 100:.2f}%")
 
-# w, log_loss = pegasos_logistic_loss(X_train, y_train, lam=0.001, epochs=2000, eta=0.0001)
-# plot_loss(log_loss)
+# ---------------------
+
+print('Train pegasos_logistic_loss')
+w, log_loss = pegasos_logistic_loss(X_train, y_train, lam=0.001, epochs=2000, eta=0.0001)
+plot_loss(log_loss)
 # np.save("regularized_log_classification.npy", w)
 
-# # Make predictions on the test set
-# y_pred = predict(X_test, w)
+# Make predictions on the test set
+y_pred = predict(X_test, w)
 
-# # # Calculate accuracy
-# accuracy = np.mean(y_pred == y_test)
-# print(f"Test Accuracy: {accuracy * 100:.2f}%")
+# Calculate accuracy
+accuracy = np.mean(y_pred == y_test)
+print(f"Test Accuracy: {accuracy * 100:.2f}%")
 
 
 # --------------------------------------------------------------------
 # polynomial feature expansion of degree 2
 
 # Transform the original features into polynomial features
-# X_poly_train = polynomial_features(X_train, 2)
-# X_poly_test = polynomial_features(X_test, 2)
+X_poly_train = polynomial_features(X_train, 2)
+X_poly_test = polynomial_features(X_test, 2)
 
-# n_samples, n_features = X_poly_train.shape
-# print(X_train.shape, y_train.shape)
-# print(X_poly_train.shape)
-# print(X_poly_test.shape)
+n_samples, n_features = X_poly_train.shape
+print(X_train.shape, y_train.shape)
+print(X_poly_train.shape)
+print(X_poly_test.shape)
 
 # ---------------------
 # Train the Perceptron on the expanded features
-# w_perceptron_poly = perceptron(X_poly_train, y_train, epochs=1000, eta=0.01)
+w_perceptron_poly = perceptron(X_poly_train, y_train, epochs=1000, eta=0.01)
 
-# # Predict on the expanded test set
-# y_pred_poly = predict(X_poly_test, w_perceptron_poly)
+# Predict on the expanded test set
+y_pred_poly = predict(X_poly_test, w_perceptron_poly)
 
-# # Calculate accuracy
-# accuracy_perceptron_poly = np.mean(y_pred_poly == y_test)
-# print(f"Perceptron with Polynomial Features (Degree 2) Test Accuracy: {accuracy_perceptron_poly * 100:.2f}%")
+# Calculate accuracy
+accuracy_perceptron_poly = np.mean(y_pred_poly == y_test)
+print(f"Perceptron with Polynomial Features (Degree 2) Test Accuracy: {accuracy_perceptron_poly * 100:.2f}%")
 
 # ---------------------
 
 # Train the Pegasos on the expanded features
 
-# print('Train the Pegasos on the expanded features')
-# w_pegasos_poly, hinge_losses_poly = pegasos(X_poly_train, y_train, epochs=700)
-# print(w_pegasos_poly.shape)
+print('Train the Pegasos on the expanded features')
+w_pegasos_poly, hinge_losses_poly = pegasos(X_poly_train, y_train, epochs=700)
+print(w_pegasos_poly.shape)
 
-# # Predict on the expanded test set
-# y_pred_poly = predict(X_poly_test, w_pegasos_poly)
+# Predict on the expanded test set
+y_pred_poly = predict(X_poly_test, w_pegasos_poly)
 
-# # Calculate accuracy
-# accuracy_pegasos_poly = np.mean(y_pred_poly == y_test)
-# print(f"Pegasos with Polynomial Features (Degree 2) Test Accuracy: {accuracy_pegasos_poly * 100:.2f}%")
+# Calculate accuracy
+accuracy_pegasos_poly = np.mean(y_pred_poly == y_test)
+print(f"Pegasos with Polynomial Features (Degree 2) Test Accuracy: {accuracy_pegasos_poly * 100:.2f}%")
 
 # ---------------------
 
 # Train the Pegasos with log loss on the expanded features
-# print('Train the Pegasos with log loss on the expanded features')
-# w_pegasos_log_loss_poly, logistic_losses = pegasos_logistic_loss(X_poly_train, y_train,lam=0.1, epochs=100, eta=0.000001)
+print('Train the Pegasos with log loss on the expanded features')
+w_pegasos_log_loss_poly, logistic_losses = pegasos_logistic_loss(X_poly_train, y_train,lam=0.1, epochs=100, eta=0.000001)
 
-# # Predict on the expanded test set
-# y_pred_poly = predict(X_poly_test, w_pegasos_log_loss_poly)
+# Predict on the expanded test set
+y_pred_poly = predict(X_poly_test, w_pegasos_log_loss_poly)
 
-# # Calculate accuracy
-# accuracy_pegasos_log_loss_poly = np.mean(y_pred_poly == y_test)
-# print(f"Pegasos with Polynomial Features (Degree 2) Test Accuracy: {accuracy_pegasos_log_loss_poly * 100:.2f}%")
+# Calculate accuracy
+accuracy_pegasos_log_loss_poly = np.mean(y_pred_poly == y_test)
+print(f"Pegasos with Polynomial Features (Degree 2) Test Accuracy: {accuracy_pegasos_log_loss_poly * 100:.2f}%")
 
 
 # --------------------------------------------------------------------
 # Compare polynomial features
-# compare_weights(w_perceptron_poly, n_features)
-# compare_weights(w_pegasos_poly, n_features)
-# compare_weights(w_pegasos_log_loss_poly, n_features)
+compare_weights(w_perceptron_poly, n_features)
+compare_weights(w_pegasos_poly, n_features)
+compare_weights(w_pegasos_log_loss_poly, n_features)
 
 # --------------------------------------------------------------------
 
 # Kernelized Perceptron
 
 # Create a Kernelized Perceptron instance with the Gaussian kernel
-# kp_gaussian = KernelizedPerceptron(kernel='gaussian', sigma=1.0, epochs=5)
+kp_gaussian = KernelizedPerceptron(kernel='gaussian', sigma=1.0, epochs=5)
 
-# print('Train kernelized perceptron with Gaussian Kernel')
+print('Train kernelized perceptron with Gaussian Kernel')
     
-# # Train the model with Gaussian kernel
-# kp_gaussian.fit(X_train, y_train)
+# Train the model with Gaussian kernel
+kp_gaussian.fit(X_train, y_train)
 
-# # Predict on test data using Gaussian kernel
-# y_pred_gaussian = kp_gaussian.predict(X_test)
+# Predict on test data using Gaussian kernel
+y_pred_gaussian = kp_gaussian.predict(X_test)
 
-# # ---------------------
+# ---------------------
 
-# # Create a Kernelized Perceptron instance with the Polynomial kernel
-# kp_polynomial = KernelizedPerceptron(kernel='polynomial', degree=3, coef0=1, epochs=5)
+# Create a Kernelized Perceptron instance with the Polynomial kernel
+kp_polynomial = KernelizedPerceptron(kernel='polynomial', degree=3, coef0=1, epochs=5)
     
-# print('Train kernelized perceptron with polynomial Kernel')
+print('Train kernelized perceptron with polynomial Kernel')
 
-# # Train the model with Polynomial kernel
-# kp_polynomial.fit(X_train, y_train)
+# Train the model with Polynomial kernel
+kp_polynomial.fit(X_train, y_train)
 
-# # Predict on test data using Polynomial kernel
-# y_pred_polynomial = kp_polynomial.predict(X_test)
+# Predict on test data using Polynomial kernel
+y_pred_polynomial = kp_polynomial.predict(X_test)
 
-# # ---------------------
+# ---------------------
 
-# # Accuracy on test set for Gaussian kernel
-# acc_gaussian = np.mean(y_test == y_pred_gaussian)
-# print(f"Gaussian Kernel Accuracy: {acc_gaussian * 100:.2f}%")
+# Accuracy on test set for Gaussian kernel
+acc_gaussian = np.mean(y_test == y_pred_gaussian)
+print(f"Gaussian Kernel Accuracy: {acc_gaussian * 100:.2f}%")
 
-# # Accuracy on test set for Polynomial kernel
-# acc_polynomial = np.mean(y_test == y_pred_polynomial)
-# print(f"Polynomial Kernel Accuracy: {acc_polynomial * 100:.2f}%")
+# Accuracy on test set for Polynomial kernel
+acc_polynomial = np.mean(y_test == y_pred_polynomial)
+print(f"Polynomial Kernel Accuracy: {acc_polynomial * 100:.2f}%")
 
 # --------------------------------------------------------------------
 
