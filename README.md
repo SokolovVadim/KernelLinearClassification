@@ -78,7 +78,7 @@ Test Accuracy: 68.88%
 
 ### Perceptron
 
-To improve the performance of the Perceptron by using polynomial feature expansion of degree 2, you can transform the input features into a higher-dimensional space by adding polynomial combinations of the features. This transformation allows the Perceptron to learn more complex decision boundaries, potentially improving performance, especially for non-linearly separable data.
+To improve the performance of the Perceptron by using polynomial feature expansion of degree 2, we can transform the input features into a higher-dimensional space by adding polynomial combinations of the features. This transformation allows the Perceptron to learn more complex decision boundaries, potentially improving performance, especially for non-linearly separable data.
 
 Steps to Apply Polynomial Expansion to Perceptron:
 
@@ -107,7 +107,7 @@ Interpret the Weights:
 - Magnitude: A higher magnitude means a stronger influence (either positive or negative).
 2. For polynomial features, weights corresponding to squared or interaction terms give insight into how combinations of features influence the model.
 3. Compare the Weights:
-You can create a comparison table or plot the weights to visually analyze their relative importance.
+we can create a comparison table or plot the weights to visually analyze their relative importance.
 
 How to Compare:
 
@@ -117,7 +117,7 @@ How to Compare:
 
 Working with Polynomial Features:
 
-If you've applied polynomial feature expansion, the weights will also correspond to the new polynomial features (like squared terms or interaction terms). You can compare the relative importance of the original features and their polynomial transformations by analyzing the weights in the expanded feature set.
+When we've applied polynomial feature expansion, the weights will also correspond to the new polynomial features (like squared terms or interaction terms). We can compare the relative importance of the original features and their polynomial transformations by analyzing the weights in the expanded feature set.
 
 Perceptron:
 
@@ -191,13 +191,6 @@ Feature 66: Weight = -500.2955449853478
 Bias term: -0.5100000000000002
 
 Pegasos parametrized
-
-The choice of regularization parameter (λλ), learning rate (ηη), and the number of epochs can greatly affect the convergence of Pegasos:
-
-    Lambda (λλ): A value of 10 means you’re applying moderate regularization, which helps avoid overfitting by preventing the model from assigning overly large weights to features.
-    Learning rate (ηη): Your learning rate of 10−610−6 is quite small, which may slow down the learning process but provides stable and gradual updates to the weight vector. This often leads to better convergence.
-    Epochs: With 1000 epochs, the model had enough time to explore and adjust its weights based on the training data, given the small learning rate.
-
 
 Pegasos with Polynomial Features (Degree 2) Test Accuracy: 70.85%
 Feature 1: Weight = -3.970061386426988e-05
@@ -293,11 +286,6 @@ Key Steps:
     predict_single(x): This computes the weighted sum of the kernel evaluations for a single input xx, using the support vectors and their labels.
 
     predict(X): This is the vectorized prediction for the whole dataset, calling predict_single(x) for each sample.
-
-Usage:
-
-    The Perceptron is trained on some binary-labeled data. The labels need to be −1−1 and 11 for the Perceptron.
-    After training, you can use the predict method to make predictions on new data.
 
 Tuning:
 
