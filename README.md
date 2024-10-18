@@ -307,3 +307,101 @@ Tuning:
 This implementation works for binary classification and uses the Gaussian kernel to implicitly map the data to a higher-dimensional space where a linear decision boundary can be found.
 
 
+Train kernelized perceptron with Gaussian Kernel
+epoch 0
+epoch 1
+epoch 2
+epoch 3
+epoch 4
+Train kernelized perceptron with polynomial Kernel
+epoch 0
+epoch 1
+epoch 2
+epoch 3
+epoch 4
+Gaussian Kernel Accuracy: 88.75%
+Polynomial Kernel Accuracy: 71.40%
+
+## kernelized Pegasos
+
+The kernelized Pegasos with the Gaussian and the polynomial kernels for SVM.
+
+
+Key Concepts:
+
+    Pegasos Algorithm: The primal optimization method for SVM.
+    Kernelized Version: In kernelized SVM, we replace the dot product ⟨xi,xj⟩⟨xi​,xj​⟩ with a kernel function K(xi,xj)K(xi​,xj​).
+
+Kernelized Pegasos SVM:
+
+In the kernelized version, we don’t directly compute a weight vector ww. Instead, we maintain a list of support vectors and their corresponding alphas. The prediction is done by evaluating the kernel function between the support vectors and new data points.
+Kernelized Pegasos Algorithm:
+
+    Objective: Minimize the SVM hinge loss with the kernel function.
+    Support Vectors: Store only the data points that are active in the optimization (non-zero alphas).
+
+Key Steps in the Code:
+
+    Kernel Functions: gaussian_kernel and polynomial_kernel compute similarity between points based on the chosen kernel.
+
+    Kernelized Pegasos SVM:
+        fit() trains the model by updating alphas, which are weights for the support vectors.
+        During training, the kernel function replaces the dot product.
+
+    Predict Function:
+        For prediction, the decision function is computed using the support vectors and their associated alphas and labels.
+
+    Support Vectors:
+        After training, only the support vectors (non-zero alphas) are retained.
+
+Hyperparameters to Tune:
+
+    sigma (for Gaussian kernel): Determines the width of the Gaussian kernel.
+    degree (for Polynomial kernel): Degree of the polynomial.
+    lam: Regularization parameter.
+    epochs: Number of iterations over the data.
+
+Train kernelized pegasos wiht gaussian model
+epoch 1
+--- 0.00 seconds ---
+epoch 2
+--- 172.38 seconds ---
+epoch 3
+--- 349.58 seconds ---
+epoch 4
+--- 523.27 seconds ---
+epoch 5
+--- 695.48 seconds ---
+epoch 6
+--- 879.39 seconds ---
+epoch 7
+--- 1061.38 seconds ---
+epoch 8
+--- 1234.70 seconds ---
+epoch 9
+--- 1409.54 seconds ---
+epoch 10
+--- 1585.58 seconds ---
+Train kernelized pegasos wiht polynomial model
+epoch 1
+--- 0.00 seconds ---
+epoch 2
+--- 70.25 seconds ---
+epoch 3
+--- 140.44 seconds ---
+epoch 4
+--- 210.35 seconds ---
+epoch 5
+--- 280.62 seconds ---
+epoch 6
+--- 350.73 seconds ---
+epoch 7
+--- 420.80 seconds ---
+epoch 8
+--- 491.37 seconds ---
+epoch 9
+--- 563.94 seconds ---
+epoch 10
+--- 634.11 seconds ---
+Gaussian Kernel Accuracy: 89.03%
+Polynomial Kernel Accuracy: 57.95%
