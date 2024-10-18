@@ -92,9 +92,6 @@ Perceptron with Polynomial Features (Degree 2) Test Accuracy: 78.88%
 ### Pegasos
 
 
-
-
-
 ## Interpret and Compare Weights
 
 The magnitude and sign of each weight provide insights into how each feature influences the prediction. Larger weights (positive or negative) suggest that the feature has a stronger influence.
@@ -268,29 +265,10 @@ Bias term: -3.970061386426988e-05
 
 Kernelized Perceptron Algorithm
 
-The Perceptron will work as follows:
-
-    Initialize an empty list of support vectors and their corresponding labels.
-    For each sample in the training set:
-        Calculate the weighted sum of the kernel values between the current sample and the stored support vectors.
-        Make a prediction based on the sign of this sum.
-        If the prediction is wrong, add the current sample and its label to the list of support vectors.
-    For a new test sample, compute the prediction based on the kernel values between the test sample and all stored support vectors.
-
-Key Steps:
-
-    gaussian_kernel(x1, x2, sigma): This computes the RBF kernel value between two points x1x1 and x2x2.
-
-    fit(X, y): During training, we loop through the dataset multiple times (defined by epochs). For each sample, we compute the prediction by summing the kernel values between the current sample and the stored support vectors. If the prediction is incorrect, the sample is added as a new support vector.
-
-    predict_single(x): This computes the weighted sum of the kernel evaluations for a single input xx, using the support vectors and their labels.
-
-    predict(X): This is the vectorized prediction for the whole dataset, calling predict_single(x) for each sample.
-
 Tuning:
 
-    sigma (bandwidth): Controls how much influence a support vector has over the prediction. A smaller σσ results in more localized influence.
-    epochs: Increasing the number of epochs can help the Perceptron converge if the data is not linearly separable in the original space.
+sigma (bandwidth): Controls how much influence a support vector has over the prediction. A smaller σσ results in more localized influence.
+epochs: Increasing the number of epochs can help the Perceptron converge if the data is not linearly separable in the original space.
 
 This implementation works for binary classification and uses the Gaussian kernel to implicitly map the data to a higher-dimensional space where a linear decision boundary can be found.
 
@@ -314,19 +292,6 @@ Polynomial Kernel Accuracy: 71.40%
 
 The kernelized Pegasos with the Gaussian and the polynomial kernels for SVM.
 
-
-Key Concepts:
-
-    Pegasos Algorithm: The primal optimization method for SVM.
-    Kernelized Version: In kernelized SVM, we replace the dot product ⟨xi,xj⟩⟨xi​,xj​⟩ with a kernel function K(xi,xj)K(xi​,xj​).
-
-Kernelized Pegasos SVM:
-
-In the kernelized version, we don’t directly compute a weight vector ww. Instead, we maintain a list of support vectors and their corresponding alphas. The prediction is done by evaluating the kernel function between the support vectors and new data points.
-Kernelized Pegasos Algorithm:
-
-    Objective: Minimize the SVM hinge loss with the kernel function.
-    Support Vectors: Store only the data points that are active in the optimization (non-zero alphas).
 
 Key Steps in the Code:
 
